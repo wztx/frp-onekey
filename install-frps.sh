@@ -2,7 +2,7 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 ###export###
 export PATH
-export FRPS_VER=0.25.3
+export FRPS_VER=0.27.1
 export FRPS_INIT="https://raw.githubusercontent.com/MvsCode/frp-onekey/master/frps.init"
 export aliyun_download_url="https://code.aliyun.com/MvsCode/frp-onekey/raw/master"
 export github_download_url="https://github.com/fatedier/frp/releases/download"
@@ -13,7 +13,7 @@ export github_download_url="https://github.com/fatedier/frp/releases/download"
 #   Mender：MvsCode
 #======================================================================
 program_name="frps"
-version="1.9.3"
+version="19.7.15"
 str_program_dir="/usr/local/${program_name}"
 program_init="/etc/init.d/${program_name}"
 program_config_file="frps.ini"
@@ -814,8 +814,8 @@ update_program_server_clang(){
         checkos
         check_centosversion
         check_os_bit
-        fun_get_version
-        remote_init_version=`wget  -qO- ${FRPS_INIT} | sed -n '/'^version'/p' | cut -d\" -f2`
+    fun_get_version
+        remote_init_version=`wget  -qO- ${FRPS.INIT} | sed -n '/'^version'/p' | cut -d\" -f2`
         local_init_version=`sed -n '/'^version'/p' ${program_init} | cut -d\" -f2`
         install_shell=${strPath}
         if [ ! -z ${remote_init_version} ];then
@@ -831,7 +831,7 @@ update_program_server_clang(){
         fi
         [ ! -d ${str_program_dir} ] && mkdir -p ${str_program_dir}
         echo -e "Loading network version for ${program_name}, please wait..."
-        fun_getServer
+     fun_getServer
         fun_getVer >/dev/null 2>&1
         local_program_version=`${str_program_dir}/${program_name} --version`
         echo -e "${COLOR_GREEN}${program_name}  local version ${local_program_version}${COLOR_END}"
@@ -841,7 +841,7 @@ update_program_server_clang(){
             ${program_init} stop
             sleep 1
             rm -f /usr/bin/${program_name} ${str_program_dir}/${program_name}
-            fun_download_file
+     fun_download_file
             if [ "${OS}" == 'CentOS' ]; then
                 chmod +x ${program_init}
                 chkconfig --add ${program_name}
