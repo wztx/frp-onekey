@@ -944,6 +944,67 @@ fi
     exit 0
 }
 ############################### configure ##################################
+############################### info ##################################
+show_frps_info(){
+    local cfg="${str_program_dir}/${program_config_file}"
+    if [ ! -s "${cfg}" ]; then
+        echo "${program_name} configuration file not found!"
+        exit 1
+    fi
+
+    # Read values from TOML config file
+    local info_bind_port info_vhost_http info_vhost_https info_dashboard_port
+    local info_dashboard_user info_dashboard_pwd info_token info_subdomain
+    local info_tcp_mux info_max_pool info_log_level info_log_days info_log_to
+    local info_kcp_port info_quic_port
+
+    info_bind_port=$(grep -E '^bindPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_vhost_http=$(grep -E '^vhostHTTPPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_vhost_https=$(grep -E '^vhostHTTPSPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_dashboard_port=$(grep -E '^webServer\.port\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_dashboard_user=$(grep -E '^webServer\.user\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_dashboard_pwd=$(grep -E '^webServer\.password\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_token=$(grep -E '^auth\.token\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_subdomain=$(grep -E '^subDomainHost\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_tcp_mux=$(grep -E '^transport\.tcpMux\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_max_pool=$(grep -E '^transport\.maxPoolCount\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_log_level=$(grep -E '^log\.level\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_log_days=$(grep -E '^log\.maxDays\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_log_to=$(grep -E '^log\.to\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_kcp_port=$(grep -E '^kcpBindPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_quic_port=$(grep -E '^quicBindPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+
+    local info_ip
+    info_ip=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
+
+    fun_frps
+    echo "Congratulations, ${program_name} configuration info:"
+    echo "================================================"
+    echo -e "You Server IP      : ${COLOR_GREEN}${info_ip}${COLOR_END}"
+    echo -e "bind port          : ${COLOR_GREEN}${info_bind_port}${COLOR_END}"
+    echo -e "vhost http port    : ${COLOR_GREEN}${info_vhost_http}${COLOR_END}"
+    echo -e "vhost https port   : ${COLOR_GREEN}${info_vhost_https}${COLOR_END}"
+    echo -e "token              : ${COLOR_GREEN}${info_token}${COLOR_END}"
+    echo -e "subdomain_host     : ${COLOR_GREEN}${info_subdomain}${COLOR_END}"
+    echo -e "tcp mux            : ${COLOR_GREEN}${info_tcp_mux}${COLOR_END}"
+    echo -e "Max Pool count     : ${COLOR_GREEN}${info_max_pool}${COLOR_END}"
+    echo -e "Log level          : ${COLOR_GREEN}${info_log_level}${COLOR_END}"
+    echo -e "Log max days       : ${COLOR_GREEN}${info_log_days}${COLOR_END}"
+    echo -e "Log file           : ${COLOR_GREEN}${info_log_to}${COLOR_END}"
+    echo -e "transport protocol : ${COLOR_GREEN}${info_kcp_port:+enable}${info_kcp_port:-disable}${COLOR_END}"
+    echo -e "kcp bind port      : ${COLOR_GREEN}${info_kcp_port}${COLOR_END}"
+    echo -e "quic bind port     : ${COLOR_GREEN}${info_quic_port}${COLOR_END}"
+    echo "================================================"
+    echo -e "${program_name} Dashboard     : ${COLOR_GREEN}http://${info_subdomain:-${info_ip}}:${info_dashboard_port}/${COLOR_END}"
+    echo -e "Dashboard port     : ${COLOR_GREEN}${info_dashboard_port}${COLOR_END}"
+    echo -e "Dashboard user     : ${COLOR_GREEN}${info_dashboard_user}${COLOR_END}"
+    echo -e "Dashboard password : ${COLOR_GREEN}${info_dashboard_pwd}${COLOR_END}"
+    echo "================================================"
+    echo ""
+    echo -e "${program_name} status manage : ${COLOR_PINKBACK_WHITEFONT}${program_name}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|config|version${COLOR_END}}"
+    exit 0
+}
+############################### config ##################################
 configure_program_server_frps(){
     if [ -s ${str_program_dir}/${program_config_file} ]; then
         vi ${str_program_dir}/${program_config_file}
@@ -1166,7 +1227,7 @@ action=$1
 if [ -z "$action" ]; then
     fun_frps
     echo "Arguments error! [$action ]"
-    echo "Usage: $(basename "$0") {install|uninstall|update|config}"
+    echo "Usage: $(basename "$0") {install|uninstall|update|config|info}"
     RET_VAL=1
 else
     case "$action" in
@@ -1175,6 +1236,9 @@ else
         ;;
     config)
         configure_program_server_frps
+        ;;
+    info)
+        show_frps_info
         ;;
     uninstall)
         uninstall_program_server_frps 2>&1 | tee /root/${program_name}-uninstall.log
@@ -1185,7 +1249,7 @@ else
     *)
         fun_frps
         echo "Arguments error! [$action ]"
-        echo "Usage: $(basename "$0") {install|uninstall|update|config}"
+        echo "Usage: $(basename "$0") {install|uninstall|update|config|info}"
         RET_VAL=1
         ;;
     esac
