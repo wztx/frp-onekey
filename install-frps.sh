@@ -937,7 +937,7 @@ fi
     echo -e "Dashboard password : ${COLOR_GREEN}${set_dashboard_pwd}${COLOR_END}"
     echo "================================================"
     echo ""
-    echo -e "${program_name} status manage : ${COLOR_PINKBACK_WHITEFONT}${program_name}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|config|version${COLOR_END}}"
+    echo -e "${program_name} status manage : ${COLOR_PINKBACK_WHITEFONT}${program_name}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|info|config|version${COLOR_END}}"
     echo -e "Example:"
     echo -e "  start: ${COLOR_PINK}${program_name}${COLOR_END} ${COLOR_GREEN}start${COLOR_END}"
     echo -e "   stop: ${COLOR_PINK}${program_name}${COLOR_END} ${COLOR_GREEN}stop${COLOR_END}"
@@ -991,7 +991,7 @@ show_frps_info(){
     echo -e "Max Pool count     : ${COLOR_GREEN}${info_max_pool}${COLOR_END}"
     echo -e "Log level          : ${COLOR_GREEN}${info_log_level}${COLOR_END}"
     echo -e "Log max days       : ${COLOR_GREEN}${info_log_days}${COLOR_END}"
-    echo -e "Log file           : ${COLOR_GREEN}${info_log_to}${COLOR_END}"
+    echo -e "Log file           : ${COLOR_GREEN}${info_log_to:+$([ "${info_log_to}" = "/dev/null" ] && echo disable || echo enable)}${COLOR_END}"
     echo -e "transport protocol : ${COLOR_GREEN}${info_kcp_port:+enable}${info_kcp_port:-disable}${COLOR_END}"
     echo -e "kcp bind port      : ${COLOR_GREEN}${info_kcp_port}${COLOR_END}"
     echo -e "quic bind port     : ${COLOR_GREEN}${info_quic_port}${COLOR_END}"
@@ -1002,7 +1002,7 @@ show_frps_info(){
     echo -e "Dashboard password : ${COLOR_GREEN}${info_dashboard_pwd}${COLOR_END}"
     echo "================================================"
     echo ""
-    echo -e "${program_name} status manage : ${COLOR_PINKBACK_WHITEFONT}${program_name}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|config|version${COLOR_END}}"
+    echo -e "${program_name} status manage : ${COLOR_PINKBACK_WHITEFONT}${program_name}${COLOR_END} {${COLOR_GREEN}start|stop|restart|status|info|config|version${COLOR_END}}"
     exit 0
 }
 ############################### config ##################################

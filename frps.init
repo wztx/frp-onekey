@@ -178,7 +178,7 @@ fun_info(){
     echo "Max Pool count     : ${info_max_pool}"
     echo "Log level          : ${info_log_level}"
     echo "Log max days       : ${info_log_days}"
-    echo "Log file           : ${info_log_to}"
+    echo "Log file           : ${info_log_to:+$([ "${info_log_to}" = "/dev/null" ] && echo disable || echo enable)}"
     echo "transport protocol : ${info_kcp_port:+enable}${info_kcp_port:-disable}"
     echo "kcp bind port      : ${info_kcp_port}"
     echo "quic bind port     : ${info_quic_port}"
