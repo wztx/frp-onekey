@@ -5,6 +5,16 @@ mkdir -p /etc/pki/tls/frp/ca
 mkdir -p /etc/pki/tls/frp/frps
 mkdir -p /etc/pki/tls/frp/frpc
 
+# 获取服务器 IP（若未通过环境变量传入则自动获取）
+if [ -z "${defIP}" ]; then
+    defIP=$(curl -s https://api.ipify.org)
+fi
+
+if [ -z "${defIP}" ]; then
+    echo "Error: Unable to determine server IP. Please set the defIP environment variable."
+    exit 1
+fi
+
 # 创建 OpenSSL 配置文件
 cat > /etc/pki/tls/frp/my-openssl.cnf << EOF
 [ ca ]
