@@ -53,7 +53,7 @@ Usage: /etc/init.d/frps {start|stop|restart|status|config|version}
 ### GitHub Actions release sync
 
 - Workflow: `.github/workflows/sync-frp-amd64.yml`
-- Purpose: automatically sync the latest `fatedier/frp` AMD64 release assets into `frp-releases/<tag>/`
+- Purpose: automatically sync the latest `fatedier/frp` AMD64 release assets into `frp-releases/<tag>/` and publish the same version as a GitHub Release in this repository
 - Triggers: manual `workflow_dispatch` and a daily scheduled run
 
 ## Script ChangeLog

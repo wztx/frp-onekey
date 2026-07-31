@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download latest FRP AMD64 assets
+        id: frp
         env:
           API_TOKEN: ${{ github.token }}
           RELEASE_API_URL: https://api.github.com/repos/fatedier/frp/releases/latest
@@ -36,6 +37,9 @@ jobs:
               "$RELEASE_API_URL"
           )"
           tag_name="$(printf '%s' "$release_json" | jq -r '.tag_name')"
+          release_name="$(printf '%s' "$release_json" | jq -r '.name // empty')"
+          release_page_url="$(printf '%s' "$release_json" | jq -r '.html_url // empty')"
+          release_body="$(printf '%s' "$release_json" | jq -r '.body // empty')"
 
           if [ -z "$tag_name" ] || [ "$tag_name" = "null" ]; then
             echo "::error::Unable to determine the latest FRP release tag."
@@ -68,6 +72,50 @@ jobs:
             echo "Downloading $asset_name"
             curl -fL --retry 3 --retry-delay 2 --output "$target_dir/$asset_name" "$asset_url"
           done
+
+          notes_file="$(mktemp)"
+          {
+            if [ -n "$release_page_url" ]; then
+              printf 'Synced from upstream [%s](%s).\n\n' "${release_name:-$tag_name}" "$release_page_url"
+            else
+              printf 'Synced from upstream FRP release %s.\n\n' "$tag_name"
+            fi
+
+            if [ -n "$release_body" ]; then
+              printf '%s\n' "$release_body"
+            else
+              printf 'Upstream release notes were not provided.\n'
+            fi
+          } > "$notes_file"
+
+          echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+          echo "release_name=${release_name:-$tag_name}" >> "$GITHUB_OUTPUT"
+          echo "target_dir=$target_dir" >> "$GITHUB_OUTPUT"
+          echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ steps.frp.outputs.tag_name }}
+          RELEASE_NAME: ${{ steps.frp.outputs.release_name }}
+          TARGET_DIR: ${{ steps.frp.outputs.target_dir }}
+          NOTES_FILE: ${{ steps.frp.outputs.notes_file }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          assets=("$TARGET_DIR"/*)
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "::error::No release assets found in $TARGET_DIR."
+            exit 1
+          fi
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release edit "$TAG_NAME" --title "$RELEASE_NAME" --notes-file "$NOTES_FILE"
+            gh release upload "$TAG_NAME" "${assets[@]}" --clobber
+          else
+            gh release create "$TAG_NAME" "${assets[@]}" --title "$RELEASE_NAME" --notes-file "$NOTES_FILE"
+          fi
 
       - name: Commit and push changes when assets change
         run: |
