@@ -135,6 +135,63 @@ fun_config(){
         return 1
     fi
 }
+fun_info(){
+    if [ ! -s ${CONFIGFILE} ]; then
+        echo "${ProgramName} configuration file not found!"
+        return 1
+    fi
+
+    local info_bind_port info_vhost_http info_vhost_https info_dashboard_port
+    local info_dashboard_user info_dashboard_pwd info_token info_subdomain
+    local info_tcp_mux info_max_pool info_log_level info_log_days info_log_to
+    local info_kcp_port info_quic_port
+
+    info_bind_port=$(grep -E '^bindPort\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_vhost_http=$(grep -E '^vhostHTTPPort\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_vhost_https=$(grep -E '^vhostHTTPSPort\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_dashboard_port=$(grep -E '^webServer\.port\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_dashboard_user=$(grep -E '^webServer\.user\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_dashboard_pwd=$(grep -E '^webServer\.password\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_token=$(grep -E '^auth\.token\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_subdomain=$(grep -E '^subDomainHost\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_tcp_mux=$(grep -E '^transport\.tcpMux\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_max_pool=$(grep -E '^transport\.maxPoolCount\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_log_level=$(grep -E '^log\.level\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_log_days=$(grep -E '^log\.maxDays\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_log_to=$(grep -E '^log\.to\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' "')
+    info_kcp_port=$(grep -E '^kcpBindPort\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+    info_quic_port=$(grep -E '^quicBindPort\s*=' "${CONFIGFILE}" | awk -F'=' '{print $2}' | tr -d ' ')
+
+    local info_ip
+    info_ip=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
+
+    fun_frps
+    echo "Congratulations, ${ProgramName} configuration info:"
+    echo "================================================"
+    echo "You Server IP      : ${info_ip}"
+    echo "bind port          : ${info_bind_port}"
+    echo "vhost http port    : ${info_vhost_http}"
+    echo "vhost https port   : ${info_vhost_https}"
+    echo "token              : ${info_token}"
+    echo "subdomain_host     : ${info_subdomain}"
+    echo "tcp mux            : ${info_tcp_mux}"
+    echo "Max Pool count     : ${info_max_pool}"
+    echo "Log level          : ${info_log_level}"
+    echo "Log max days       : ${info_log_days}"
+    echo "Log file           : ${info_log_to}"
+    echo "transport protocol : ${info_kcp_port:+enable}${info_kcp_port:-disable}"
+    echo "kcp bind port      : ${info_kcp_port}"
+    echo "quic bind port     : ${info_quic_port}"
+    echo "================================================"
+    echo "${ProgramName} Dashboard     : http://${info_subdomain:-${info_ip}}:${info_dashboard_port}/"
+    echo "Dashboard port     : ${info_dashboard_port}"
+    echo "Dashboard user     : ${info_dashboard_user}"
+    echo "Dashboard password : ${info_dashboard_pwd}"
+    echo "================================================"
+    echo ""
+    echo "${ProgramName} status manage : ${ProgramName} {start|stop|restart|status|config|info|version}"
+    return 0
+}
 fun_version(){
     echo "${ProgramName} version ${program_version}"
     return 0
@@ -149,6 +206,9 @@ case "${arg1}" in
     start|stop|restart|status|config)
         fun_${arg1}
     ;;
+    info|[Ii][Nn][Ff][Oo])
+        fun_info
+    ;;
     [vV][eE][rR][sS][iI][oO][nN]|-[vV][eE][rR][sS][iI][oO][nN]|--[vV][eE][rR][sS][iI][oO][nN]|-[vV]|--[vV])
         fun_version
     ;;
@@ -160,7 +220,7 @@ case "${arg1}" in
     ;;
     *)
         fun_frps
-        echo "Usage: $SCRIPTNAME {start|stop|restart|status|config|version}"
+        echo "Usage: $SCRIPTNAME {start|stop|restart|status|config|info|version}"
         RET_VAL=1
     ;;
 esac
