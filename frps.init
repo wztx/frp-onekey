@@ -42,7 +42,7 @@ fun_frps()
 
 fun_check_run(){
     PID=`ps -ef | grep -v grep | grep -i "${BIN}" | awk '{print $2}'`
-    if [ ! -z $PID  ]; then
+    if [ ! -z "$PID"  ]; then
         return 0
     else
         return 1
@@ -72,7 +72,7 @@ fun_start()
         return 1
     fi
     echo " done"
-    echo "${ProgramName} (pid $PID)is running."
+    echo "${ProgramName} (pid $PID) is running."
     return 0
 }
 
@@ -81,7 +81,7 @@ fun_stop(){
       fun_frps
     fi
     if fun_check_run; then
-        echo -n "Stoping ${ProgramName} (pid $PID)... "
+        echo -n "Stopping ${ProgramName} (pid $PID)... "
         kill $PID
         if [ "$?" != 0 ] ; then
             echo " failed"
@@ -100,7 +100,7 @@ fun_restart(){
 }
 fun_status(){
     PID=`ps -ef | grep -v grep | grep -i "${BIN}" | awk '{print $2}'`
-    if [ ! -z $PID ]; then
+    if [ ! -z "$PID" ]; then
         echo "${ProgramName} (pid $PID) is running..."
     else
         echo "${ProgramName} is stopped"
@@ -145,7 +145,6 @@ fun_help(){
 }
 
 arg1=$1
-[  -z ${arg1} ]
 case "${arg1}" in
     start|stop|restart|status|config)
         fun_${arg1}
