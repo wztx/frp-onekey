@@ -270,7 +270,7 @@ fun_download_file(){
         rm -fr ${program_latest_filename} frp_${FRPS_VER}_linux_${ARCHS}
 	echo -e "Downloading ${program_name}..."
 	echo ""
-        wget --no-check-certificate --show-progress -O "${program_latest_filename}" "${program_latest_file_url}"
+        wget --no-check-certificate --show-progress --progress=bar:force:noscroll -O "${program_latest_filename}" "${program_latest_file_url}"
 	echo ""		
 	if [ $? -ne 0 ]; then
         echo -e " ${COLOR_RED}Download failed${COLOR_END}"
