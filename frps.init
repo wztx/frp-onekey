@@ -63,14 +63,21 @@ fun_start()
         echo "${ProgramName} (pid $PID) already running."
         return 0
     fi
-    fun_load_config
+    if ! fun_load_config; then
+        return 1
+    fi
     echo -n "Starting ${ProgramName}(${program_version})..."
-    ${BIN} -c ${CONFIGFILE} >/dev/null 2>&1 &
+    local tmp_log
+    tmp_log=$(mktemp /tmp/frps_start_XXXXXX.log)
+    ${BIN} -c ${CONFIGFILE} >"${tmp_log}" 2>&1 &
     sleep 1
     if ! fun_check_run; then
         echo "start failed"
+        [ -s "${tmp_log}" ] && cat "${tmp_log}"
+        rm -f "${tmp_log}"
         return 1
     fi
+    rm -f "${tmp_log}"
     echo " done"
     echo "${ProgramName} (pid $PID) is running."
     return 0
@@ -205,6 +212,7 @@ arg1=$1
 case "${arg1}" in
     start|stop|restart|status|config)
         fun_${arg1}
+        RET_VAL=$?
     ;;
     info|[Ii][Nn][Ff][Oo])
         fun_info

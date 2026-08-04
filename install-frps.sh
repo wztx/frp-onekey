@@ -956,9 +956,10 @@ EOF
 
 	# Start the frps service
 	${program_init} start
+	start_ret=$?
 
 	# Check if the frps service started successfully
-	if pgrep -x "${program_name}" >/dev/null; then
+	if [ ${start_ret} -eq 0 ]; then
 		echo "${program_name} service started successfully."
 		fun_frps
 		echo -e "${COLOR_GREEN}
@@ -1213,6 +1214,10 @@ update_program_server_frps() {
             [ -s "$program_init" ] && ln -sf "$program_init" /usr/bin/$program_name
             [ ! -x "$program_init" ] && chmod 755 "$program_init"
             "$program_init" start
+            if [ $? -ne 0 ]; then
+                echo -e "${COLOR_RED}$program_name failed to start after update!${COLOR_END}"
+                exit 1
+            fi
             echo "$program_name version $($str_program_dir/$program_name --version)"
             echo "$program_name update success!"
         else
