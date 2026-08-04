@@ -704,6 +704,39 @@ else
                 set_webserver_tls_key_file="${input_webserver_tls_key_file}"
                 echo -e "${program_name} webServer.tls.keyFile: ${COLOR_YELLOW}${set_webserver_tls_key_file}${COLOR_END}"
                 echo ""
+                # Validate that the cert and key files exist; offer to auto-generate if missing
+                if [ ! -f "${set_webserver_tls_cert_file}" ] || [ ! -f "${set_webserver_tls_key_file}" ]; then
+                    echo -e "${COLOR_YELLOW}Warning: TLS cert or key file not found.${COLOR_END}"
+                    echo -e "  cert: ${set_webserver_tls_cert_file}"
+                    echo -e "  key:  ${set_webserver_tls_key_file}"
+                    echo ""
+                    read -e -p "Auto-generate a self-signed certificate? [Y/n]: " gen_cert_choice
+                    if [[ -z "${gen_cert_choice}" || "${gen_cert_choice}" =~ ^[Yy] ]]; then
+                        cert_dir=$(dirname "${set_webserver_tls_cert_file}")
+                        key_dir=$(dirname "${set_webserver_tls_key_file}")
+                        mkdir -p "${cert_dir}" "${key_dir}"
+                        echo -e "Generating self-signed TLS certificate..."
+                        if openssl req -x509 -newkey rsa:2048 \
+                            -keyout "${set_webserver_tls_key_file}" \
+                            -out "${set_webserver_tls_cert_file}" \
+                            -days 3650 -nodes \
+                            -subj "/CN=${defIP:-localhost}" \
+                            -addext "subjectAltName=IP:${defIP:-127.0.0.1},DNS:localhost" \
+                            2>/dev/null; then
+                            echo -e "${COLOR_GREEN}Self-signed certificate generated successfully.${COLOR_END}"
+                        else
+                            echo -e "${COLOR_RED}Failed to generate certificate. Please provide valid cert and key files.${COLOR_END}"
+                            set_webserver_tls="disable"
+                            set_webserver_tls_cert_file=""
+                            set_webserver_tls_key_file=""
+                        fi
+                    else
+                        echo -e "${COLOR_RED}TLS cert/key files are required. Disabling webServer TLS.${COLOR_END}"
+                        set_webserver_tls="disable"
+                        set_webserver_tls_cert_file=""
+                        set_webserver_tls_key_file=""
+                    fi
+                fi
                 ;;
             0|2|[nN]|[nN][oO]|[oO][fF][fF]|[fF][aA][lL][sS][eE]|[dD][iI][sS][aA][bB][lL][eE]|"")
                 set_webserver_tls="disable"
