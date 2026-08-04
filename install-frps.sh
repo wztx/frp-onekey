@@ -436,6 +436,14 @@ fun_input_quic_bind_port(){
     [ -z "${input_quic_bind_port}" ] && input_quic_bind_port="${def_quic_bind_port}"
     fun_check_port "quic_bind_port" "${input_quic_bind_port}"
 }
+fun_input_ssh_tunnel_gateway_bind_port(){
+    def_ssh_tunnel_gateway_bind_port="2200"
+    echo ""
+    echo -n -e "Please input ${program_name} ${COLOR_GREEN}sshTunnelGateway.bindPort${COLOR_END} [1-65535]"
+    read -e -p "(Default ssh tunnel gateway bind port: ${def_ssh_tunnel_gateway_bind_port}):" input_ssh_tunnel_gateway_bind_port
+    [ -z "${input_ssh_tunnel_gateway_bind_port}" ] && input_ssh_tunnel_gateway_bind_port="${def_ssh_tunnel_gateway_bind_port}"
+    fun_check_port "ssh_tunnel_gateway_bind_port" "${input_ssh_tunnel_gateway_bind_port}"
+}
 pre_install_frps(){
     fun_frps
     echo -e "Check your server setting, please wait..."
@@ -634,6 +642,47 @@ else
         esac
         echo -e "transport protocol support: ${COLOR_YELLOW}${set_transport_protocol}${COLOR_END}"
         echo -e ""
+        echo -e "Please select ${COLOR_GREEN}SSH Tunnel Gateway${COLOR_END}"
+        echo    "1: enable"
+        echo    "2: disable (default)"
+        echo "-------------------------"
+        read -e -p "Enter your choice (1, 2 or exit. default [2]): " str_ssh_tunnel_gateway
+        case "${str_ssh_tunnel_gateway}" in
+            1|[yY]|[yY][eE][sS]|[oO][nN]|[tT][rR][uU][eE]|[eE][nN][aA][bB][lL][eE])
+                set_ssh_tunnel_gateway="enable"
+                fun_input_ssh_tunnel_gateway_bind_port
+                [ -n "${input_port}" ] && set_ssh_tunnel_gateway_bind_port="${input_ssh_tunnel_gateway_bind_port}"
+                echo -e "${program_name} sshTunnelGateway.bindPort: ${COLOR_YELLOW}${set_ssh_tunnel_gateway_bind_port}${COLOR_END}"
+                echo -e ""
+                echo -n -e "Please input ${program_name} ${COLOR_GREEN}sshTunnelGateway.privateKeyFile${COLOR_END}"
+                read -e -p "(Leave empty to auto-generate):" input_ssh_private_key_file
+                set_ssh_private_key_file="${input_ssh_private_key_file}"
+                echo -e "${program_name} sshTunnelGateway.privateKeyFile: ${COLOR_YELLOW}${set_ssh_private_key_file:-auto}${COLOR_END}"
+                echo -e ""
+                echo -n -e "Please input ${program_name} ${COLOR_GREEN}sshTunnelGateway.authorizedKeysFile${COLOR_END}"
+                read -e -p "(Leave empty to allow all):" input_ssh_authorized_keys_file
+                set_ssh_authorized_keys_file="${input_ssh_authorized_keys_file}"
+                echo -e "${program_name} sshTunnelGateway.authorizedKeysFile: ${COLOR_YELLOW}${set_ssh_authorized_keys_file:-none}${COLOR_END}"
+                echo -e ""
+                ;;
+            0|2|[nN]|[nN][oO]|[oO][fF][fF]|[fF][aA][lL][sS][eE]|[dD][iI][sS][aA][bB][lL][eE]|"")
+                set_ssh_tunnel_gateway="disable"
+                set_ssh_tunnel_gateway_bind_port=0
+                set_ssh_private_key_file=""
+                set_ssh_authorized_keys_file=""
+                ;;
+            [eE][xX][iI][tT])
+                exit 1
+                ;;
+            *)
+                set_ssh_tunnel_gateway="disable"
+                set_ssh_tunnel_gateway_bind_port=0
+                set_ssh_private_key_file=""
+                set_ssh_authorized_keys_file=""
+                ;;
+        esac
+        echo -e "SSH Tunnel Gateway: ${COLOR_YELLOW}${set_ssh_tunnel_gateway}${COLOR_END}"
+        echo -e ""
 
         echo "============== Check your input =============="
         echo -e "You Server IP      : ${COLOR_GREEN}${defIP}${COLOR_END}"
@@ -653,6 +702,12 @@ else
         echo -e "transport protocol : ${COLOR_GREEN}${set_transport_protocol}${COLOR_END}"
         echo -e "kcp bind port      : ${COLOR_GREEN}${set_kcp_bind_port}${COLOR_END}"
         echo -e "quic bind port     : ${COLOR_GREEN}${set_quic_bind_port}${COLOR_END}"
+        echo -e "SSH Tunnel Gateway : ${COLOR_GREEN}${set_ssh_tunnel_gateway}${COLOR_END}"
+        if [ "${set_ssh_tunnel_gateway}" == "enable" ]; then
+        echo -e "SSH tunnel port    : ${COLOR_GREEN}${set_ssh_tunnel_gateway_bind_port}${COLOR_END}"
+        echo -e "SSH private key    : ${COLOR_GREEN}${set_ssh_private_key_file:-auto}${COLOR_END}"
+        echo -e "SSH authorized keys: ${COLOR_GREEN}${set_ssh_authorized_keys_file:-none}${COLOR_END}"
+        fi
         echo "=============================================="
         echo ""
         echo "Press any key to start...or Press Ctrl+c to cancel"
@@ -669,6 +724,20 @@ install_program_server_frps(){
 
     echo -n "config file for ${program_name} ..."
     
+# Build SSH Tunnel Gateway config lines
+if [ "${set_ssh_tunnel_gateway}" == "enable" ]; then
+    ssh_tunnel_config="sshTunnelGateway.bindPort = ${set_ssh_tunnel_gateway_bind_port}"
+    [ -n "${set_ssh_private_key_file}" ] && ssh_tunnel_config="${ssh_tunnel_config}
+sshTunnelGateway.privateKeyFile = \"${set_ssh_private_key_file}\""
+    [ -n "${set_ssh_authorized_keys_file}" ] && ssh_tunnel_config="${ssh_tunnel_config}
+sshTunnelGateway.authorizedKeysFile = \"${set_ssh_authorized_keys_file}\""
+else
+    ssh_tunnel_config="# sshTunnelGateway.bindPort = 2200
+# sshTunnelGateway.privateKeyFile = \"/home/frp-user/.ssh/id_rsa\"
+# sshTunnelGateway.autoGenPrivateKeyPath = \"\"
+# sshTunnelGateway.authorizedKeysFile = \"/home/frp-user/.ssh/authorized_keys\""
+fi
+
 # Write the configuration to the frps config file
 
 cat << EOF > "${str_program_dir}/${program_config_file}"
@@ -799,10 +868,7 @@ subDomainHost = "${set_subdomain_host}"
 # ssh tunnel gateway
 # If you want to enable this feature, the bindPort parameter is required, while others are optional.
 # By default, this feature is disabled. It will be enabled if bindPort is greater than 0.
-# sshTunnelGateway.bindPort = 2200
-# sshTunnelGateway.privateKeyFile = "/home/frp-user/.ssh/id_rsa"
-# sshTunnelGateway.autoGenPrivateKeyPath = ""
-# sshTunnelGateway.authorizedKeysFile = "/home/frp-user/.ssh/authorized_keys"
+${ssh_tunnel_config}
 EOF
     echo " done"
 
