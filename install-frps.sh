@@ -1039,7 +1039,9 @@ fi
     echo -e "kcp bind port      : ${COLOR_GREEN}${set_kcp_bind_port}${COLOR_END}"
     echo -e "quic bind port     : ${COLOR_GREEN}${set_quic_bind_port}${COLOR_END}"	
     echo "================================================"
-    echo -e "${program_name} Dashboard     : ${COLOR_GREEN}http://${set_subdomain_host}:${set_dashboard_port}/${COLOR_END}"
+    local dashboard_scheme="http"
+    [ "${set_webserver_tls}" = "enable" ] && dashboard_scheme="https"
+    echo -e "${program_name} Dashboard     : ${COLOR_GREEN}${dashboard_scheme}://${set_subdomain_host}:${set_dashboard_port}/${COLOR_END}"
     echo -e "Dashboard port     : ${COLOR_GREEN}${set_dashboard_port}${COLOR_END}"
     echo -e "Dashboard user     : ${COLOR_GREEN}${set_dashboard_user}${COLOR_END}"
     echo -e "Dashboard password : ${COLOR_GREEN}${set_dashboard_pwd}${COLOR_END}"
@@ -1082,6 +1084,8 @@ show_frps_info(){
     info_log_to=$(grep -E '^log\.to\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
     info_kcp_port=$(grep -E '^kcpBindPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
     info_quic_port=$(grep -E '^quicBindPort\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' ')
+    local info_tls_cert
+    info_tls_cert=$(grep -E '^webServer\.tls\.certFile\s*=' "${cfg}" | awk -F'=' '{print $2}' | tr -d ' "')
 
     local info_ip
     info_ip=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
@@ -1104,7 +1108,9 @@ show_frps_info(){
     echo -e "kcp bind port      : ${COLOR_GREEN}${info_kcp_port}${COLOR_END}"
     echo -e "quic bind port     : ${COLOR_GREEN}${info_quic_port}${COLOR_END}"
     echo "================================================"
-    echo -e "${program_name} Dashboard     : ${COLOR_GREEN}http://${info_subdomain:-${info_ip}}:${info_dashboard_port}/${COLOR_END}"
+    local info_dashboard_scheme="http"
+    [ -n "${info_tls_cert}" ] && info_dashboard_scheme="https"
+    echo -e "${program_name} Dashboard     : ${COLOR_GREEN}${info_dashboard_scheme}://${info_subdomain:-${info_ip}}:${info_dashboard_port}/${COLOR_END}"
     echo -e "Dashboard port     : ${COLOR_GREEN}${info_dashboard_port}${COLOR_END}"
     echo -e "Dashboard user     : ${COLOR_GREEN}${info_dashboard_user}${COLOR_END}"
     echo -e "Dashboard password : ${COLOR_GREEN}${info_dashboard_pwd}${COLOR_END}"
