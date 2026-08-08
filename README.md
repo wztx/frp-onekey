@@ -47,7 +47,7 @@ chmod 700 ./install-frps.sh
 ```
 ### Server management（服务管理器）
 ```Bash
-Usage: /etc/init.d/frps {start|stop|restart|status|config|version}
+Usage: /etc/init.d/frps {start|stop|restart|status|config|info|version}
 ```
 
 ### GitHub Actions release sync
@@ -58,6 +58,37 @@ Usage: /etc/init.d/frps {start|stop|restart|status|config|version}
 
 ## Script ChangeLog
 ---------------------------------------
+
+### [2.0.1] - 2026-08-08
+
+#### Changed
+* Version bump to 2.0.1
+
+### [2.0.0] - 2026-08-04
+
+#### Added
+* Add SSH Tunnel Gateway interactive configuration support.
+
+* Add webServer TLS (Dashboard HTTPS) interactive configuration support, including certificate/key file validation and auto-generation.
+
+#### Fixed
+* Fix frps service failed to start: propagate errors and capture startup logs.
+
+* Fix webServer TLS: validate cert/key files and offer auto-generation when files are missing.
+
+* Fix dashboard URL showing `http://` when TLS is enabled — now correctly shows `https://`.
+
+* Fix download progress: replace curl fake progress bar with wget real-time progress display (speed + percentage).
+
+* Fix `info` command: show `enable`/`disable` label for log file status.
+
+#### Added (2026-07-31)
+* Add `info` command to display frps configuration panel. Usage: `/etc/init.d/frps info`
+
+### [1.0.8] - 2026-07-17
+
+#### Fixed
+* Fix GitHub download URL to fetch frp release assets directly from `fatedier/frp` releases instead of the mirror repository.
 
 ### [1.0.7] - 2024-07-24
 
