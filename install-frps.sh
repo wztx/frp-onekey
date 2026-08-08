@@ -15,7 +15,7 @@ export github_latest_version_api="https://api.github.com/repos/mvscode/frps-onek
 
 # Program information
 program_name="frps"
-version="1.0.7"
+version="2.0.1"
 str_program_dir="/usr/local/${program_name}"
 program_init="/etc/init.d/${program_name}"
 program_config_file="frps.toml"
