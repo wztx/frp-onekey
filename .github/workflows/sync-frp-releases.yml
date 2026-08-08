@@ -1,4 +1,4 @@
-name: Sync FRP AMD64 Releases
+name: Sync FRP Releases
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: sync-frp-amd64
+  group: sync-frp-releases
   cancel-in-progress: false
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download latest FRP AMD64 assets
+      - name: Download latest FRP release assets
         id: frp
         env:
           API_TOKEN: ${{ github.token }}
@@ -52,20 +52,19 @@ jobs:
           mapfile -t assets < <(
             printf '%s' "$release_json" | jq -r '
               .assets[]
-              | select(.name | test("amd64"; "i"))
               | [.name, .browser_download_url]
               | @tsv
             '
           )
 
           if [ "${#assets[@]}" -eq 0 ]; then
-            echo "::error::No AMD64 assets found for $tag_name."
+            echo "::error::No release assets found for $tag_name."
             exit 1
           fi
 
           find "$target_dir" -maxdepth 1 -type f ! -name '.gitkeep' -delete
 
-          echo "Syncing ${#assets[@]} AMD64 assets for $tag_name into $target_dir"
+          echo "Syncing ${#assets[@]} release assets for $tag_name into $target_dir"
 
           for asset in "${assets[@]}"; do
             IFS=$'\t' read -r asset_name asset_url <<<"$asset"
@@ -127,9 +126,9 @@ jobs:
           git add frp-releases
 
           if git diff --cached --quiet; then
-            echo "No FRP AMD64 asset changes detected."
+            echo "No FRP release asset changes detected."
             exit 0
           fi
 
-          git commit -m "chore: sync frp amd64 release assets"
+          git commit -m "chore: sync frp release assets"
           git push
