@@ -5,7 +5,7 @@
 [![GitHub Repo][repo-shield]][repo-url]
 [![Stars][stars-shield]][stars-url]
 [![Forks][forks-shield]][forks-url]
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/mvscode/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/gbraad)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/mvscode/img/custom_images/orange_img.png)]
 
 [repo-shield]: https://img.shields.io/badge/GitHub-mvscode%2Ffrps--onekey-brightgreen?style=flat-square&logo=github
 [repo-url]: https://github.com/mvscode/frps-onekey
